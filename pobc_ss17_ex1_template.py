@@ -26,7 +26,7 @@ pylab.close('all')
 ###########################################
 Rm = 10.0  # [MOhms]
 Cm = 2000.  # [pF]
-tau_m = Rm*Cm/1000.0  # membrane time constant [ms]
+tau_m = Rm*Cm/1000.0  # membrane time constant [ms] = 20
 tau_s = 10.0     # synaptic time constant [ms]
 Trefract = 10.   # The refractory period of the LIF neuron [ms]
 Vthresh = -45.   # The threshold potential of the LIF neuron [mV]
@@ -55,13 +55,14 @@ nest.ResetKernel()
 
 # Create the IAF neuron, see http://www.nest-simulator.org/cc/iaf_psc_exp/
 neuron = nest.Create('iaf_psc_exp', 1, nrn_parameter_dict)
+neuron2 = nest.Create('iaf_psc_exp', 1, nrn_parameter_dict)
 
 # Create inputs
 t_spike_input = 55.
 t_step = 50.
 step_duration = 0.5
 step_amplitude = 60790.
-# step_amplitude = 1.
+# step_amplitude = 0.
 
 #sine = nest.Create('ac_generator',1,{'amplitude':100.0,'frequency':2.0})
 spike_gen = nest.Create("spike_generator", params={"spike_times": array([t_spike_input])})
@@ -82,20 +83,23 @@ spike_rec = nest.Create('spike_detector')
 #nest.Connect(sine,neuron)
 # Connect spike generator to neuron
 # Note: The connection weight is given in [pA]
-nest.Connect(spike_gen, neuron, syn_spec={'delay': 2.0})
+spike_gen_syn_spec = {'delay': 2., 'weight': 5000.}
+nest.Connect(spike_gen, neuron, syn_spec=spike_gen_syn_spec)
+nest.Connect(spike_gen, neuron2, syn_spec=spike_gen_syn_spec)
 
 # Connect current step input step_gen to the neuron
 # Note: The current amplitudes as defined above are multiplied with the weight.
-nest.Connect(step_gen, neuron, syn_spec={'delay': 2.0})
+nest.Connect(step_gen, neuron2, syn_spec={'delay': 2.})
 
 # Connect voltmeter and spike recorder to neuron
 nest.Connect(voltmeter, neuron)
-nest.Connect(neuron, spike_rec)
+nest.Connect(voltmeter, neuron2)
+nest.Connect(neuron2, spike_rec)
 
 ###################################
 # Now simulate 
 ###################################
-nest.Simulate(500.0)
+nest.Simulate(250.0)
 
 ###################################
 # Analyze results and make plots
@@ -104,7 +108,7 @@ nest.Simulate(500.0)
 
 # Extract spikes voltage
 spikes = nest.GetStatus(spike_rec)[0]['events']['times']
-print(spikes)
+print(spikes)  # printing spikes for second experiment (neuron2)
 # events = nest.GetStatus(spike_rec, 'events')
 vm = nest.GetStatus(voltmeter, 'events')[0]['V_m']
 
