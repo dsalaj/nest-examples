@@ -99,7 +99,7 @@ nest.Connect(neuron2, spike_rec)
 ###################################
 # Now simulate 
 ###################################
-nest.Simulate(250.0)
+nest.Simulate(500.0)
 
 ###################################
 # Analyze results and make plots
@@ -116,5 +116,3 @@ vm = nest.GetStatus(voltmeter, 'events')[0]['V_m']
 # Plot results
 nest.voltage_trace.from_device(voltmeter)
 pylab.show()
-# nest.raster_plot.from_device(spike_rec)
-# pylab.show()
