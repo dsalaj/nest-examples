@@ -101,8 +101,21 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
                  "u": 0.0,
                  "x": 1.0}
 
+    Vresting = -60.0
+    Rm = 2.
+    Cm = 10.0 * 1e3
+    lif_params = {"V_m": Vresting,  # Membrane potential in mV
+                  "E_L": Vresting,  # Resting membrane potential in mV
+                  "C_m": Cm,  # Capacity of the membrane in pF
+                  "tau_m": (Rm * Cm) / 1e3,  # Membrane time constant in ms
+                  "V_th": -40.0,  # Spike threshold in mV
+                  "V_reset": Vresting,  # Reset potential of the membrane in mV
+                  "t_ref": .2  # refractory time in ms
+                  }
+
     # construct IAF neuron population and recorders
     lif_neurons = nest.Create("iaf_psc_exp", Nnrn)
+    nest.SetStatus(lif_neurons, lif_params)
     voltmeter = nest.Create('voltmeter', 1, {'withgid': True})
     spike_rec = nest.Create('spike_detector')
 
@@ -111,7 +124,6 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
 
     # connect input population to IAF population
     nest.CopyModel("tsodyks_synapse", "syn", syn_param)
-    # nest.Connect(input_neurons, lif_neurons, {"rule": "fixed_indegree", "indegree": 100}, syn_spec="tsodyks_synapse")
     nest.Connect(input_neurons, lif_neurons, {"rule": "fixed_indegree", "indegree": 100}, syn_spec={"model": "syn"})
 
     # connect recorders
@@ -119,14 +131,13 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
     nest.Connect(lif_neurons, spike_rec)
 
     # Perform the simulation for Tsim seconds.
-    # nest.SetKernelStatus("resolution", 0.1)
+    # nest.SetKernelStatus({'resolution': 0.1})
     nest.Simulate(Tsim * 1000.0)
 
     # extract spike times and convert to [s]
     events = nest.GetStatus(spike_rec, 'events')
     spikes = [n_e['times'] for n_e in events]
     d_spikes = array([array([n_e['times'], n_e['senders']]) for n_e in events])
-    print(d_spikes)
     spikes = np.concatenate(spikes)
 
     # return spikes and other stuff
@@ -179,11 +190,23 @@ def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
 # plotted. Use avg_firing_rate to calculate the population rate.
 # *******************************************************
 
-spikes, d_spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2)
+# Solution b)
+
+# F = 0.376
+nest.ResetKernel()
+spikes, d_spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2.)
 rate = avg_firing_rate(spikes, dt=0.005, binsize=10, Tsim=2., Nneurons=500)
 print("rate", rate)
-nest.raster_plot.from_data(d_spikes)
-# nest.raster_plot.from_device(spike_rec)
+# nest.raster_plot.from_data(d_spikes)
+nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
+
+# F = 0.1
+nest.ResetKernel()
+spikes, d_spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.1, Tsim=2.)
+rate = avg_firing_rate(spikes, dt=0.005, binsize=10, Tsim=2., Nneurons=500)
+print("rate", rate)
+# nest.raster_plot.from_data(d_spikes)
+nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
 show()  # don't forget to call show() in the end
 # such that figures are displayed on the screen
