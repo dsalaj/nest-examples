@@ -14,6 +14,7 @@
 # *******************************************************************
 # At the beginning we import the necessary Python packages
 # from pypcsimplus import * # the pcsim package with extras
+from random import uniform
 import nest
 from numpy import *  # for numerical operations
 from pylab import *  # for plotting (matplotlib)
@@ -21,6 +22,18 @@ import nest.raster_plot
 import nest.voltage_trace
 
 # nest.SetKernelStatus({'dict_miss_is_error': False})
+
+Vresting = -60.0
+Rm = 2.
+Cm = 10.0 * 1e3
+lif_params = {"V_m": Vresting,  # Membrane potential in mV
+              "E_L": Vresting,  # Resting membrane potential in mV
+              "C_m": Cm,  # Capacity of the membrane in pF
+              "tau_m": (Rm * Cm) / 1e3,  # Membrane time constant in ms
+              "V_th": -40.0,  # Spike threshold in mV
+              "V_reset": Vresting,  # Reset potential of the membrane in mV
+              "t_ref": .2  # refractory time in ms
+              }
 
 
 def avg_firing_rate(spikes, dt, binsize, Tsim, Nneurons):
@@ -56,7 +69,13 @@ def construct_input_population(Nin, Rin, Tstart):
     # noise_neurons...the Poisson generators' GIDs
     # input_neurons...the input neurons' GIDs
 
-    noise = nest.Create('poisson_generator', Nin, {'rate': Rin, 'start': Tstart})
+    params = {'rate': Rin, 'start': Tstart}
+    if Rin == 'uniform':
+        params = [{'rate': uniform(0, 40), 'start': Tstart} for _ in range(Nin)]
+    elif Rin == '0_or_40':
+        params = [{'rate': 0. if uniform() < 0.5 else 40., 'start': Tstart} for _ in range(Nin)]
+
+    noise = nest.Create('poisson_generator', Nin, params=params)
     input_neurons = nest.Create("iaf_psc_delta", Nin)
     # Choose threshold very close to resting potential so that each spike in a Poisson generator
     # elicits one spike in the corresponding input neuron
@@ -101,18 +120,6 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
                  "u": 0.0,
                  "x": 1.0}
 
-    Vresting = -60.0
-    Rm = 2.
-    Cm = 10.0 * 1e3
-    lif_params = {"V_m": Vresting,  # Membrane potential in mV
-                  "E_L": Vresting,  # Resting membrane potential in mV
-                  "C_m": Cm,  # Capacity of the membrane in pF
-                  "tau_m": (Rm * Cm) / 1e3,  # Membrane time constant in ms
-                  "V_th": -40.0,  # Spike threshold in mV
-                  "V_reset": Vresting,  # Reset potential of the membrane in mV
-                  "t_ref": .2  # refractory time in ms
-                  }
-
     # construct IAF neuron population and recorders
     lif_neurons = nest.Create("iaf_psc_exp", Nnrn)
     nest.SetStatus(lif_neurons, lif_params)
@@ -143,7 +150,7 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
     return spikes_ts, spike_rec
 
 
-def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
+def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim, Rin):
     """
         Use this one for task d)
     perform a simulation with one input pool of Nin spiking neurons
@@ -157,6 +164,8 @@ def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
     Returns:
     spikes....array containing all spike times (in [s]) in the network
     """
+    if Rin not in ['uniform', '0_or_40']:
+        raise Exception("Rin not valid")
 
     # use the following parameters for the dynamic synapses
     W = 1e6 / 32.0  # USE THESE WEIGHT VALUES FOR TASK d)
@@ -170,27 +179,50 @@ def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
                  "x": 1.0}
 
     # construct IAF neuron population and recorders
+    lif_neurons = nest.Create("iaf_psc_exp", Nnrn)
+    nest.SetStatus(lif_neurons, lif_params)
+    voltmeter = nest.Create('voltmeter', 1, {'withgid': True})
+    spike_rec = nest.Create('spike_detector')
+
     # use the construct_input_population function to construct the input population
-    noise, input_neurons = construct_input_population(...)
+    Tstart = 0.1
+    noise, input_neurons = construct_input_population(Nin, Rin, Tstart=Tstart)
+
     # connect input population to IAF population
+    nest.CopyModel("tsodyks_synapse", "syn", syn_param)
+    nest.Connect(input_neurons, lif_neurons, {"rule": "fixed_indegree", "indegree": 100}, syn_spec={"model": "syn"})
+
     # connect recorders
+    nest.Connect(voltmeter, lif_neurons)
+    nest.Connect(lif_neurons, spike_rec)
 
     # Perform the simulation for Tsim seconds.
+    for _ in range(Tsim):
+        nest.Simulate(1000.0)
+        if Rin == 'uniform':
+            params = [{'rate': uniform(0, 40), 'start': Tstart} for _ in range(Nin)]
+        elif Rin == '0_or_40':
+            params = [{'rate': 0. if uniform() < 0.5 else 40., 'start': Tstart} for _ in range(Nin)]
+        nest.SetStatus(noise, params)
 
     # extract spike times and convert to [s]
+    events = nest.GetStatus(spike_rec, 'events')
+    spikes_ts = events[0]['times']
+    spikes_gids = events[0]['senders']
 
     # return spikes and other stuff
+    return spikes_ts, spike_rec
 
 
 # *******************************************************
 # Main script code should be here.
 # Several simulations with the model have to be performed
-# with different Ri,U,D,F and the population rate should be 
+# with different Ri,U,D,F and the population rate should be
 # plotted. Use avg_firing_rate to calculate the population rate.
 # *******************************************************
 
 # Solution b)
-
+'''
 # F = 0.376
 nest.ResetKernel()
 spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2.)
@@ -210,7 +242,35 @@ show()  # don't forget to call show() in the end
 
 plt.plot(range(len(f1_rate_1)), f1_rate_1, label="F = 0.376")
 plt.plot(range(len(f1_rate_2)), f1_rate_2, label="F = 0.1")
-plt.title("Population frequency of facilitating dynamic synapse type F1")
+plt.title("Avg population frequency of facilitating dynamic synapse type F1")
+plt.xlabel("Time")
+plt.ylabel("Population Frequency")
+plt.legend()
+plt.show()
+'''
+
+# Solution d)
+
+# F2 uniform
+nest.ResetKernel()
+spikes, spike_rec = perform_simulation_d(Nnrn=1000, Nin=500, Rin='uniform', U=0.25, D=0.706, F=0.021, Tsim=4)
+f2_rate_1 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=4., Nneurons=1000)
+# print("F2 uniform rate", f2_rate_1)
+nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
+
+# F2 0 or 40
+nest.ResetKernel()
+spikes, spike_rec = perform_simulation_d(Nnrn=1000, Nin=500, Rin='0_or_40', U=0.25, D=0.706, F=0.021, Tsim=4)
+f2_rate_2 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=4., Nneurons=1000)
+# print("F2 uniform rate", f2_rate_2)
+nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
+
+show()  # don't forget to call show() in the end
+# such that figures are displayed on the screen
+
+plt.plot(range(len(f2_rate_1)), f2_rate_1, label="Rin := uniform")
+plt.plot(range(len(f2_rate_2)), f2_rate_2, label="Rin := 0 or 40")
+plt.title("Avg population frequency of facilitating dynamic synapse type F2")
 plt.xlabel("Time")
 plt.ylabel("Population Frequency")
 plt.legend()
