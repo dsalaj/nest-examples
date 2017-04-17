@@ -136,12 +136,11 @@ def perform_simulation(Nnrn, Nin, Rin, U, D, F, Tsim):
 
     # extract spike times and convert to [s]
     events = nest.GetStatus(spike_rec, 'events')
-    spikes = [n_e['times'] for n_e in events]
-    d_spikes = array([array([n_e['times'], n_e['senders']]) for n_e in events])
-    spikes = np.concatenate(spikes)
+    spikes_ts = events[0]['times']
+    spikes_gids = events[0]['senders']
 
     # return spikes and other stuff
-    return spikes, d_spikes, spike_rec
+    return spikes_ts, spike_rec
 
 
 def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
@@ -194,19 +193,25 @@ def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim):
 
 # F = 0.376
 nest.ResetKernel()
-spikes, d_spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2.)
-rate = avg_firing_rate(spikes, dt=0.005, binsize=10, Tsim=2., Nneurons=500)
-print("rate", rate)
-# nest.raster_plot.from_data(d_spikes)
+spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2.)
+f1_rate_1 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=2., Nneurons=1000)
+print("F1 rate (F = 0.376)", f1_rate_1)
 nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
 # F = 0.1
 nest.ResetKernel()
-spikes, d_spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.1, Tsim=2.)
-rate = avg_firing_rate(spikes, dt=0.005, binsize=10, Tsim=2., Nneurons=500)
-print("rate", rate)
-# nest.raster_plot.from_data(d_spikes)
+spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.1, Tsim=2.)
+f1_rate_2 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=2., Nneurons=1000)
+print("F1 rate (F = 0.1)", f1_rate_2)
 nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
 show()  # don't forget to call show() in the end
 # such that figures are displayed on the screen
+
+plt.plot(range(len(f1_rate_1)), f1_rate_1, label="F = 0.376")
+plt.plot(range(len(f1_rate_2)), f1_rate_2, label="F = 0.1")
+plt.title("Population frequency of facilitating dynamic synapse type F1")
+plt.xlabel("Time")
+plt.ylabel("Population Frequency")
+plt.legend()
+plt.show()
