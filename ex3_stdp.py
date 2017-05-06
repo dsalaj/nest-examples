@@ -165,21 +165,26 @@ def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0,
         nest.Simulate(1 * 1000.0)
         synapses = nest.GetConnections(input_neurons, lif_neuron)
         weight_evolution.append(nest.GetStatus(synapses, "weight"))
-    weight_evolution = np.array(weight_evolution)
+    weight_evolution = np.array(weight_evolution).transpose()
 
     # To extract spikes of input neuons as a list of numpy-arrays, use the
     # following function provided in nnb_utils:
     spikes_in = get_spike_times(in_spike_rec)
 
     # extract spike times and convert to [s]
-    events = nest.GetStatus(spike_rec, 'events')
-    spikes = events[0]['times']
+    # events = nest.GetStatus(spike_rec, 'events')
+    # spikes = events[0]['times']
+    spikes = get_spike_times(spike_rec)
+
     # nest.raster_plot.from_device(in_spike_rec)
-    # nest.voltage_trace.from_device(voltmeter)
+    # show()
+    # nest.raster_plot.from_device(spike_rec)
+    # # nest.voltage_trace.from_device(voltmeter)
     # show()
     # exit(1)
 
     return spikes, weight_evolution, spikes_in
+
 
 def plot_raster(spikes,tmax):
     """
@@ -192,7 +197,7 @@ def plot_raster(spikes,tmax):
         ns = len(sp)
         plot(sp,i*ones(ns),'b.')
         i=i+1
-   
+
 
 def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, filename_fig2, Tmax_spikes=25):
     """
@@ -253,8 +258,6 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     ylabel('counts/bin')
     text(-0.19, 1.07, 'A', fontsize = 'large', transform = ax.transAxes)
 
-    
-    
     ax = subplot(2,2,2)
     corr = avg_cross_correlate_spikes(inp_spikes[Nin2:Nin], 200, binsize = 5e-3, corr_range = (-100e-3,100e-3))
     plot(arange(-100e-3,101e-3, 5e-3), corr, marker = 'o')
@@ -266,7 +269,6 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     axvline(0.0)
     text(-0.19, 1.07, 'B', fontsize = 'large', transform = ax.transAxes)
 
-    
     ax = subplot(2,2,3)
     corr = avg_cross_correlate_spikes_2sets(inp_spikes[0:Nin2], [spikes], binsize = 5e-3, corr_range = (-100e-3,100e-3))
     plot(arange(-100e-3,101e-3, 5e-3), corr, marker = 'o')
@@ -278,7 +280,6 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     axvline(0.0)
     text(-0.19, 1.07, 'C', fontsize = 'large', transform = ax.transAxes)
 
-    
     ax = subplot(2,2,4)
     corr = avg_cross_correlate_spikes_2sets(inp_spikes[Nin2:Nin], [spikes], binsize = 5e-3, corr_range = (-100e-3,100e-3))
     plot(arange(-100e-3,101e-3, 5e-3), corr, marker = 'o')
@@ -293,5 +294,11 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     savefig(filename_fig2)
 
 
+# SOLUTION b)
 spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=1.1, Tsim=200.)
-plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="fig1", filename_fig2="fig2")
+# plot_raster(spikes, 25)
+# show()
+# plot_raster(spikes_in, 25)
+# show()
+spikes = spikes[0]
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="ex3_b_fig1", filename_fig2="ex3_b_fig2")
