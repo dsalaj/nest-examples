@@ -111,26 +111,66 @@ def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0,
     Tsim.....Simulation time
     """
     
-        N = 200               # number of input neurons     
-        
-        #########################################
-        # create any neurons, recorders etc. here
-        #########################################
-        
-        
-        # the follwoing creates N input neurons and sets their spike trains during simulation
-        spike_generators,input_neurons = construct_input_population(N, jitter, Tsim, sequence)
-        
-        #########################################
-        # Connect nodes, simulate
-        #########################################
-        
-        
-        # To extract spikes of input neuons as a list of numpy-arrays, use the
-        # following function provided in nnb_utils:
-        spikes_in = get_spike_times(THE RECORDER THAT RECORDS SPIKES FROM INPUT_NEURONS)
-                
-        return spikes, weight_evolution, spikes_in
+    N = 200               # number of input neurons
+
+    #########################################
+    # create any neurons, recorders etc. here
+    #########################################
+    syn_param = {"weight": 2 * 1e3,
+                 "lambda": 0.005,
+                 "tau_plus": 30,
+                 "alpha": alpha,
+                 "Wmax": Wmax_fact * W,
+                 "mu_plus": 0,
+                 "mu_minus": 0
+                 }
+    nest.CopyModel("stdp_synapse", "syn", syn_param)
+
+    Rm = 1
+    Cm = 30e3
+    tau_m = Rm * Cm / 1000.0
+    lif_params = {#"V_m": -60.,  # Membrane potential in mV
+                  "E_L": -60.,  # Resting membrane potential in mV
+                  "C_m": Cm,  # Capacity of the membrane in pF
+                  "tau_m": tau_m,  # Membrane time constant in ms
+                  "V_th": -45.,  # Spike threshold in mV
+                  "V_reset": -60,  # Reset potential of the membrane in mV
+                  "t_ref": 2.  # refractory time in ms
+                  }
+    lif_neuron = nest.Create("iaf_psc_exp", 1)
+    nest.SetStatus(lif_neuron, lif_params)
+    voltmeter = nest.Create('voltmeter', 1, {'withgid': True})
+    spike_rec = nest.Create('spike_detector')
+
+
+    # the follwoing creates N input neurons and sets their spike trains during simulation
+    spike_generators,input_neurons = construct_input_population(N, jitter, Tsim, sequence)
+
+    #########################################
+    # Connect nodes, simulate
+    #########################################
+    nest.Connect(input_neurons, lif_neuron, syn_spec={"model": "syn"})
+
+    # connect recorders
+    nest.Connect(voltmeter, lif_neuron)
+    nest.Connect(lif_neuron, spike_rec)
+
+    weight_evolution = []
+    synapses = nest.GetConnections(input_neurons, lif_neuron)
+    for i in range(int(Tsim)):
+        nest.Simulate(1 * 1000.0)
+        weight_evolution.append(nest.GetStatus(synapses, "weight"))
+    weight_evolution = np.array(weight_evolution)
+
+    # To extract spikes of input neuons as a list of numpy-arrays, use the
+    # following function provided in nnb_utils:
+    spikes_in = get_spike_times(spike_rec)
+
+    # extract spike times and convert to [s]
+    events = nest.GetStatus(spike_rec, 'events')
+    spikes = events[0]['times']
+
+    return spikes, weight_evolution, spikes_in
 
 def plot_raster(spikes,tmax):
     """
@@ -242,3 +282,7 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     text(-0.19, 1.07, 'D', fontsize = 'large', transform = ax.transAxes)
 
     savefig(filename_fig2)
+
+
+spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=2, alpha=1.1)
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="fig1", filename_fig2="fig2")
