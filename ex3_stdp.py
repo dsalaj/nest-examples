@@ -199,7 +199,11 @@ def plot_raster(spikes,tmax):
         i=i+1
 
 
-def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, filename_fig2, Tmax_spikes=25):
+color_cycle = ['#0000ff', '#ff0000', '#00ff00', '#ee7020', '#ff00ff', '#ddc040']
+
+
+def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, filename_fig2, Tmax_spikes=25,
+                 plot_index=0):
     """
     This function plots two figures for analysis of results
     fig1,fig2....figure identifiers
@@ -219,9 +223,29 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     for i in range(inp_spikes.__len__()):
         inp_spikes[i] = inp_spikes[i][inp_spikes[i]<Tmax_spikes]
 
+    f = figure(2, figsize=(8, 8))
+    f.subplots_adjust(top=0.89, left=0.09, bottom=0.15, right=0.93, hspace=0.30, wspace=0.40)
+
+    ax = subplot(1,1,1)
+    mean_up = mean(weights[0:Nin2,:], axis = 0)
+    mean_down = mean(weights[Nin2:Nin,:], axis = 0)
+    std_up = std(weights[0:Nin2,:], axis = 0)
+    std_down = std(weights[Nin2:Nin,:], axis = 0)
+    ax.set_color_cycle(color_cycle[plot_index:plot_index + 2])
+    plot_index += 2
+    plot(linspace(0,Tsim,len(mean_up)), mean_up)
+    plot(linspace(0,Tsim,len(mean_down)), mean_down)
+    errorbar(linspace(0, Tsim, len(mean_up))[::20], mean_up[::20], std_up[::20], fmt = '.')
+    errorbar(linspace(0, Tsim, len(mean_down))[::20], mean_down[::20], std_down[::20], fmt = '.')
+    xlabel('time [sec]')
+    ylabel('avg. syn. weight')
+    text(-0.19, 1.07, 'B', fontsize = 'large', transform = ax.transAxes)
+
+    savefig("comparison")
+
     f = figure(fig1, figsize = (8,3.6   ))
     f.subplots_adjust(top= 0.89, left = 0.09, bottom = 0.15, right = 0.93, hspace = 0.30, wspace = 0.40)
-    
+
     ax = subplot(1,2,1)
     imshow(weights, aspect = 'auto')
     ylim(0,Nin+1)
@@ -229,7 +253,7 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     colorbar()
     ylabel('synapse id.')
     text(-0.19, 1.07, 'A', fontsize = 'large', transform = ax.transAxes)
-    
+
     ax = subplot(1,2,2)
     mean_up = mean(weights[0:Nin2,:], axis = 0)
     mean_down = mean(weights[Nin2:Nin,:], axis = 0)
@@ -242,7 +266,7 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     xlabel('time [sec]')
     ylabel('avg. syn. weight')
     text(-0.19, 1.07, 'B', fontsize = 'large', transform = ax.transAxes)
-    
+
     savefig(filename_fig1)       
 
     f = figure(fig2, figsize = (8,8))
@@ -292,13 +316,32 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
     text(-0.19, 1.07, 'D', fontsize = 'large', transform = ax.transAxes)
 
     savefig(filename_fig2)
+    close(fig1)
+    close(fig2)
 
 
-# SOLUTION b)
-spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=1.1, Tsim=200.)
-# plot_raster(spikes, 25)
-# show()
-# plot_raster(spikes_in, 25)
-# show()
+# # SOLUTION b)
+# spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=1.1, Tsim=200.)
+# # plot_raster(spikes, 25)
+# # show()
+# # plot_raster(spikes_in, 25)
+# # show()
+# spikes = spikes[0]
+# plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="ex3_b_fig1", filename_fig2="ex3_b_fig2")
+
+# SOLUTION c)
+nest.ResetKernel()
+spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=1.0, Tsim=200.)
 spikes = spikes[0]
-plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="ex3_b_fig1", filename_fig2="ex3_b_fig2")
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
+             filename_fig1="ex3_c_1_0_fig1", filename_fig2="ex3_c_1_0_fig2", plot_index=0)
+nest.ResetKernel()
+spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=1.3, Tsim=200.)
+spikes = spikes[0]
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
+             filename_fig1="ex3_c_1_3_fig1", filename_fig2="ex3_c_1_3_fig2", plot_index=2)
+nest.ResetKernel()
+spikes, weight_evolution, spikes_in = perform_simulation(sequence=False, jitter=.002, alpha=2.5, Tsim=200.)
+spikes = spikes[0]
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
+             filename_fig1="ex3_c_2_5_fig1", filename_fig2="ex3_c_2_5_fig2", plot_index=4)
