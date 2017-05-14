@@ -137,7 +137,10 @@ def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0,
                   "tau_m": tau_m,  # Membrane time constant in ms
                   "V_th": -45.,  # Spike threshold in mV
                   "V_reset": -60.,  # Reset potential of the membrane in mV
-                  "t_ref": 2.  # refractory time in ms
+                  "t_ref": 2.,  # refractory time in ms
+                  "tau_syn_ex": 10.0,
+                  "tau_syn_in": 10.0,
+                  "tau_minus": 30.0,
                   }
     lif_neuron = nest.Create("iaf_psc_exp", 1)
     nest.SetStatus(lif_neuron, lif_params)
