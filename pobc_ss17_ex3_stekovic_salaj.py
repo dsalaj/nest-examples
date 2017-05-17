@@ -56,7 +56,7 @@ def generate_stimulus_sequence(nchannels, Rs, jitter, Rbase, Tsim):
     return spikes, Soccur
 
 
-def construct_input_population(Nin, jitter, Tsim, sequence):
+def construct_input_population(Nin, jitter, Tsim, sequence, sequence_only=False):
     # This is a hack.
     # Because in Nest, one cannot connect spike generators with other
     # neurons with STDP synapses, we need to first connect them to a
@@ -71,13 +71,16 @@ def construct_input_population(Nin, jitter, Tsim, sequence):
     # input_neurons...the input neurons' GIDs
     
     # create input population
-        if sequence:
-           inp_spikes, s_occur = generate_stimulus_sequence(int(Nin/2), 2.0, jitter, 8.0, Tsim)
+        if sequence_only:
+            inp_spikes, s_occur = generate_stimulus_sequence(int(Nin), 2.0, jitter, 0.000000001, Tsim)
         else:
-           inp_spikes, s_occur = generate_stimulus(int(Nin/2), 2.0, jitter, 8.0, Tsim)
-        inp_spikes_2, s_occur_2 = generate_stimulus(int(Nin/2), 0.0, 0e-3, 8.0, Tsim)
+            if sequence:
+               inp_spikes, s_occur = generate_stimulus_sequence(int(Nin/2), 2.0, jitter, 8.0, Tsim)
+            else:
+               inp_spikes, s_occur = generate_stimulus(int(Nin/2), 2.0, jitter, 8.0, Tsim)
+            inp_spikes_2, s_occur_2 = generate_stimulus(int(Nin/2), 0.0, 0e-3, 8.0, Tsim)
 
-        inp_spikes += inp_spikes_2
+            inp_spikes += inp_spikes_2
         
         spike_generators = nest.Create("spike_generator", Nin)
         for (sg, sp) in zip(spike_generators, inp_spikes):
@@ -102,10 +105,12 @@ def construct_input_population(Nin, jitter, Tsim, sequence):
         return spike_generators, input_neurons
 
 
-def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0, W = 20.0e2):
+def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0, W = 20.0e2, sequence_only=False,
+                       N=200):
     """
     Performs the network simulation.
     sequence...If True, stimulus in input population will be sequential
+    N........Number of input neurons
     jitter...Jitter on input population events
     alpha....Scaling factor of negative STDP window size A- = -alpha*A+
     W........Initial weight of synapses
@@ -113,8 +118,6 @@ def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0,
     Tsim.....Simulation time
     """
     
-    N = 200               # number of input neurons
-
     #########################################
     # create any neurons, recorders etc. here
     #########################################
@@ -150,7 +153,7 @@ def perform_simulation(sequence, jitter=0.0, alpha=1.1, Wmax_fact=2, Tsim=200.0,
 
 
     # the follwoing creates N input neurons and sets their spike trains during simulation
-    spike_generators, input_neurons = construct_input_population(N, jitter, Tsim, sequence)
+    spike_generators, input_neurons = construct_input_population(N, jitter, Tsim, sequence, sequence_only)
 
     #########################################
     # Connect nodes, simulate
@@ -350,13 +353,21 @@ def plot_figures(fig1,fig2, spikes, weights, inp_spikes, Tsim, filename_fig1, fi
 # plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
 #              filename_fig1="ex3_c_2_5_fig1", filename_fig2="ex3_c_2_5_fig2", plot_index=4)
 
-# SOLUTION d)
-spikes, weight_evolution, spikes_in = perform_simulation(sequence=True, jitter=.0, alpha=1.1, Tsim=200.)
-spikes = spikes[0]
-plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="ex3_d_fig1", filename_fig2="ex3_d_fig2")
+# # SOLUTION d)
+# spikes, weight_evolution, spikes_in = perform_simulation(sequence=True, jitter=.0, alpha=1.1, Tsim=200.)
+# spikes = spikes[0]
+# plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200., filename_fig1="ex3_d_fig1", filename_fig2="ex3_d_fig2")
+#
+# nest.ResetKernel()
+# spikes, weight_evolution, spikes_in = perform_simulation(sequence=True, jitter=.0, alpha=1.1, Tsim=200., Wmax_fact=1.5)
+# spikes = spikes[0]
+# plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
+#              filename_fig1="ex3_d_Wmax_fig1", filename_fig2="ex3_d_Wmax_fig2")
 
+# SOLUTION e)
 nest.ResetKernel()
-spikes, weight_evolution, spikes_in = perform_simulation(sequence=True, jitter=.0, alpha=1.1, Tsim=200., Wmax_fact=1.5)
+spikes, weight_evolution, spikes_in = perform_simulation(sequence=True, jitter=.0, alpha=1.1, Tsim=400.,
+                                                         sequence_only=True, N=52)
 spikes = spikes[0]
-plot_figures(0, 1, spikes, weight_evolution, spikes_in, 200.,
-             filename_fig1="ex3_d_Wmax_fig1", filename_fig2="ex3_d_Wmax_fig2")
+plot_figures(0, 1, spikes, weight_evolution, spikes_in, 400.,
+             filename_fig1="ex3_e_fig1", filename_fig2="ex3_e_fig2")
