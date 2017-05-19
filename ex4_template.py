@@ -170,7 +170,7 @@ def main():
 
     # Set parameters of the NEST simulation kernel
     nest.SetKernelStatus({'print_time': True,
-                          'local_num_threads': 1}) # increase if you can use more threads
+                          'local_num_threads': 1})  # increase if you can use more threads
 
     # Create nodes -------------------------------------------------
 
@@ -181,16 +181,21 @@ def main():
                       'V_th': 15.0,
                       'tau_syn_ex': 3.0,
                       'tau_syn_in': 2.0,
-                      'V_reset': 13.8})
+                      'V_reset': 13.8,
+                      })
 
     # Create excitatory and inhibitory populations
-    ...
+    e_pool = nest.Create("iaf_psc_exp", N_E)
+    nest.SetStatus(e_pool, {'I_e': 14.5})
+    i_pool = nest.Create("iaf_psc_exp", N_I)
+    nest.SetStatus(i_pool, {'I_e': 14.5})
 
     # Create noise input
     noise = nest.Create('poisson_generator', 1, {'rate': p_rate})
 
     # create spike detectors from excitatory and inhibitory populations
-    ...
+    e_spike_rec = nest.Create('spike_detector')
+    i_spike_rec = nest.Create('spike_detector')
 
     # create input generators
     dt_stim = 300.  #[ms]
@@ -198,8 +203,8 @@ def main():
     Rs = 200.  #[Hz]
     # this is for ex 4A
     inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
-    # this is for ex 4B
-    inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # # this is for ex 4B
+    # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
 
     # create two spike generators,
     # set their spike_times of i-th generator to inp_spikes[i]
@@ -227,7 +232,14 @@ def main():
                     }
     nest.CopyModel("tsodyks_synapse", "EE", syn_param_EE)  # synapse model for E->E connections
     # connect E to E with EE synapse model and fixed indegree C_E. Specify the delay and weight distribution here.
-    ...
+    nest.Connect(e_pool, e_pool,
+                 {"rule": "fixed_indegree", "indegree": C_E},
+                 {'model': "EE",
+                           'weight': {'distribution': 'normal',
+                                      'mu': J_EE,
+                                      'sigma': abs(0.7 * J_EE)},
+                           'delay': delay_dict}
+                 )
 
     syn_param_EI = {"tau_psc": 2.0,
                     "tau_fac": 1790.,  # facilitation time constant in ms
@@ -238,7 +250,14 @@ def main():
                     }
     nest.CopyModel("tsodyks_synapse", "EI", syn_param_EI)  # synapse model for E->I connections
     # connect E to I with EI synapse model and fixed indegree C_E. Specify the delay and weight distribution here.
-    ...
+    nest.Connect(e_pool, i_pool,
+                 {"rule": "fixed_indegree", "indegree": C_E},
+                 {'model': "EI",
+                  'weight': {'distribution': 'normal',
+                             'mu': J_EI,
+                             'sigma': abs(0.7 * J_EI)},
+                  'delay': delay_dict}
+                 )
 
     syn_param_IE = {"tau_psc": 2.0,
                     "tau_fac": 376.,  # facilitation time constant in ms
@@ -249,7 +268,14 @@ def main():
                     }
     nest.CopyModel("tsodyks_synapse", "IE", syn_param_IE)  # synapse model for I->E connections
     # connect I to E with IE model and fixed indegree C_E. Specify the delay and weight distribution here.
-    ...
+    nest.Connect(i_pool, e_pool,
+                 {"rule": "fixed_indegree", "indegree": C_I},
+                 {'model': "IE",
+                  'weight': {'distribution': 'normal',
+                             'mu': J_IE,
+                             'sigma': abs(0.7 * J_IE)},
+                  'delay': delay_dict}
+                 )
 
     syn_param_II = {"tau_psc": 2.0,
                     "tau_fac": 21.,  # facilitation time constant in ms
@@ -260,46 +286,69 @@ def main():
                     }
     nest.CopyModel("tsodyks_synapse", "II", syn_param_II)  # synapse model for I->I connections
     # connect I to I with II model and fixed indegree C_E. Specify the delay and weight distribution here.
-    ...
+    nest.Connect(i_pool, i_pool,
+                 {"rule": "fixed_indegree", "indegree": C_I},
+                 {'model': "II",
+                  'weight': {'distribution': 'normal',
+                             'mu': J_II,
+                             'sigma': abs(0.7 * J_II)},
+                  'delay': delay_dict}
+                 )
 
     # connect one noise generator to all neurons
     nest.CopyModel('static_synapse_hom_w', 'excitatory_noise', {'weight': J_noise})
-    nest.Connect(noise, nodes, syn_spec={'model': 'excitatory_noise', 'delay': delay_dict})
+    nest.Connect(noise, e_pool, syn_spec={'model': 'excitatory_noise', 'delay': delay_dict})
+    nest.Connect(noise, i_pool, syn_spec={'model': 'excitatory_noise', 'delay': delay_dict})
 
     # connect input neurons to E-pool
     # Each input neuron makes C_input synapses
     # distribute weights uniformly in (2.5*J_EE, 7.5*J_EE)
-    ...
+    nest.Connect(spike_generators, e_pool, {'rule': "fixed_outdegree", "outdegree": C_inp},
+                                           {'model': 'static_synapse',
+                                            'weight': {'distribution': 'uniform',
+                                                       'low': 2.5 * J_EE,
+                                                       'high': 7.5 * J_EE},
+                                            'delay': delay_dict}
+                 )
 
     # connect all recorded E/I neurons to the respective detector
-    ...
+    nest.Connect(e_pool, e_spike_rec)
+    nest.Connect(i_pool, i_spike_rec)
 
     # SIMULATE!! -----------------------------------------------------
-    ...
+    nest.Simulate(simtime)
+    t = int(simtime / 1000.)
+    # # shorter simulation time for checking rates
+    # t = 3
+    # nest.Simulate(1000. * t)
 
     #compute excitatory rate
-    ...
+    spikes_e = get_spike_times(e_spike_rec)
+    total_spikes_e = np.concatenate(spikes_e)
+    rate_ex = total_spikes_e.shape[0] / (t * N_E)
     print(('Excitatory rate   : {:.2f} Hz'.format(rate_ex)))
 
     #compute inhibitory rate
-    ...
+    spikes_i = get_spike_times(i_spike_rec)
+    total_spikes_i = np.concatenate(spikes_i)
+    rate_in = total_spikes_i.shape[0] / (t * N_I)
     print(('Inhibitory rate   : {:.2f} Hz'.format(rate_in)))
 
-    # To plot network activity
-    #nest.raster_plot.from_device(spikes_E, hist=False, title='')
-    #pylab.show()
+    # # To plot network activity
+    # nest.raster_plot.from_device(e_spike_rec, hist=False, title='')
+    # pylab.show()
 
-    # train the readout on 20 randomly chosen training sets
-    NUM_TRAIN = 30
-    TRAIN_READOUT = True
-    if TRAIN_READOUT:
-        tau_lsm = 0.020  #[sec]
-        readout_delay = 0.075  # [sec]
-        spike_times = get_spike_times(spikes_E)  # returns spike times in seconds
-        rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
-        times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
-        print("Extract Liquid States...")
-        # don't forget to add constant component to states for bias
+    # # train the readout on 20 randomly chosen training sets
+    # NUM_TRAIN = 30
+    # TRAIN_READOUT = True
+    # if TRAIN_READOUT:
+    #     tau_lsm = 0.020  #[sec]
+    #     readout_delay = 0.075  # [sec]
+    #     spike_times = get_spike_times(spikes_E)  # returns spike times in seconds
+    #     rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
+    #     times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
+    #     print("Extract Liquid States...")
+    #     # don't forget to add constant component to states for bias
 
 if __name__ == "__main__":
     main()
