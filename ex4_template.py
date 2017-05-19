@@ -338,17 +338,28 @@ def main():
     # nest.raster_plot.from_device(e_spike_rec, hist=False, title='')
     # pylab.show()
 
-    # # train the readout on 20 randomly chosen training sets
-    # NUM_TRAIN = 30
-    # TRAIN_READOUT = True
-    # if TRAIN_READOUT:
-    #     tau_lsm = 0.020  #[sec]
-    #     readout_delay = 0.075  # [sec]
-    #     spike_times = get_spike_times(spikes_E)  # returns spike times in seconds
-    #     rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
-    #     times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
-    #     print("Extract Liquid States...")
-    #     # don't forget to add constant component to states for bias
+    # train the readout on 20 randomly chosen training sets
+    NUM_TRAIN = 20
+    TRAIN_READOUT = True
+    if TRAIN_READOUT:
+        tau_lsm = 0.020  #[sec]
+        readout_delay = 0.075  # [sec]
+        spike_times = get_spike_times(e_spike_rec)  # returns spike times in seconds
+        rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
+        times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
+        print("Extract Liquid States...")
+        # don't forget to add constant component to states for bias
+        states = get_liquid_states(spike_times, times, tau_lsm)
+        train_frac = 0.8
+        err_list = []
+        for _ in range(NUM_TRAIN):
+            states_train, states_test, targets_train, targets_test = divide_train_test(states, targets, train_frac)
+            w = train_readout(states_train, targets_train, reg_fact=0)
+            err = test_readout(w, states_test, targets_test)
+            err_list.append(err)
+        err_mean = sum(err_list) / len(err_list)
+        err_std = np.std(err_list)
+        print("mean error = " + str(err_mean) + " std error = " + str(err_std))
 
 if __name__ == "__main__":
     main()
