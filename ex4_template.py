@@ -201,10 +201,18 @@ def main():
     dt_stim = 300.  #[ms]
     stim_len = 50.  #[ms]
     Rs = 200.  #[Hz]
+
     # this is for ex 4A
-    inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
-    # # this is for ex 4B
-    # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
+    # Results:
+    # Excitatory rate: 21.29 Hz Inhibitory rate: 57.08 Hz
+    # mean error = 0.301127819549 std error = 0.0268448430608
+
+    # this is for ex 4B
+    inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # Results:
+    # Excitatory rate   : 21.58 Hz Inhibitory rate   : 57.20 Hz
+    # mean error = 0.00112781954887 std error = 0.00358623759931
 
     # create two spike generators,
     # set their spike_times of i-th generator to inp_spikes[i]
