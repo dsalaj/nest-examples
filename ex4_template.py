@@ -203,13 +203,15 @@ def main():
     Rs = 200.  #[Hz]
 
     # this is for ex 4A
-    # inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
+    inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
+    readout_delay = 0.01  # [sec]
     # Results:
     # Excitatory rate: 21.29 Hz Inhibitory rate: 57.08 Hz
     # mean error = 0.301127819549 std error = 0.0268448430608
 
     # this is for ex 4B
-    inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # readout_delay = 0.075  # [sec]
     # Results:
     # Excitatory rate   : 21.58 Hz Inhibitory rate   : 57.20 Hz
     # mean error = 0.00112781954887 std error = 0.00358623759931
@@ -351,9 +353,9 @@ def main():
     TRAIN_READOUT = True
     if TRAIN_READOUT:
         tau_lsm = 0.020  #[sec]
-        readout_delay = 0.075  # [sec]
         spike_times = get_spike_times(e_spike_rec)  # returns spike times in seconds
         rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
+        # times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
         times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
         print("Extract Liquid States...")
         # don't forget to add constant component to states for bias
