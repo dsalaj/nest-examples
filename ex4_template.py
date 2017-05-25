@@ -5,6 +5,7 @@ import nest.raster_plot
 import pylab
 import numpy as np
 from pobc_utils import get_spike_times, poisson_generator
+import matplotlib.pyplot as plt
 
 
 def generate_stimuls_mem(dt_stim, stim_len, Rs, Tsim):
@@ -204,16 +205,17 @@ def main():
 
     # this is for ex 4A
     inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
-    readout_delay = 0.01  # [sec]
+    readout_delays = [0.01]  # [sec]
     # Results:
     # Excitatory rate: 21.29 Hz Inhibitory rate: 57.08 Hz
     # mean error = 0.301127819549 std error = 0.0268448430608
 
     # this is for ex 4B
     # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
-    # readout_delay = 0.075  # [sec]
+    # readout_delays = np.arange(0.01, 0.3, 0.03)  # [sec]
     # Results:
     # Excitatory rate   : 21.58 Hz Inhibitory rate   : 57.20 Hz
+    # readout_delay = 0.075  # [sec]
     # mean error = 0.00112781954887 std error = 0.00358623759931
 
     # create two spike generators,
@@ -322,7 +324,7 @@ def main():
                  )
 
     # connect all recorded E/I neurons to the respective detector
-    nest.Connect(e_pool, e_spike_rec)
+    nest.Connect(e_pool[:500], e_spike_rec)
     nest.Connect(i_pool, i_spike_rec)
 
     # SIMULATE!! -----------------------------------------------------
@@ -332,17 +334,18 @@ def main():
     # t = 3
     # nest.Simulate(1000. * t)
 
-    #compute excitatory rate
-    spikes_e = get_spike_times(e_spike_rec)
-    total_spikes_e = np.concatenate(spikes_e)
-    rate_ex = total_spikes_e.shape[0] / (t * N_E)
-    print(('Excitatory rate   : {:.2f} Hz'.format(rate_ex)))
+    # # don't forget to record all neurons for rate calculation
+    # #compute excitatory rate
+    # spikes_e = get_spike_times(e_spike_rec)
+    # total_spikes_e = np.concatenate(spikes_e)
+    # rate_ex = total_spikes_e.shape[0] / (t * N_E)
+    # print(('Excitatory rate   : {:.2f} Hz'.format(rate_ex)))
 
-    #compute inhibitory rate
-    spikes_i = get_spike_times(i_spike_rec)
-    total_spikes_i = np.concatenate(spikes_i)
-    rate_in = total_spikes_i.shape[0] / (t * N_I)
-    print(('Inhibitory rate   : {:.2f} Hz'.format(rate_in)))
+    # #compute inhibitory rate
+    # spikes_i = get_spike_times(i_spike_rec)
+    # total_spikes_i = np.concatenate(spikes_i)
+    # rate_in = total_spikes_i.shape[0] / (t * N_I)
+    # print(('Inhibitory rate   : {:.2f} Hz'.format(rate_in)))
 
     # # To plot network activity
     # nest.raster_plot.from_device(e_spike_rec, hist=False, title='')
@@ -352,24 +355,34 @@ def main():
     NUM_TRAIN = 20
     TRAIN_READOUT = True
     if TRAIN_READOUT:
-        tau_lsm = 0.020  #[sec]
-        spike_times = get_spike_times(e_spike_rec)  # returns spike times in seconds
-        rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
-        # times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
-        times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
-        print("Extract Liquid States...")
-        # don't forget to add constant component to states for bias
-        states = get_liquid_states(spike_times, times, tau_lsm)
-        train_frac = 0.8
-        err_list = []
-        for _ in range(NUM_TRAIN):
-            states_train, states_test, targets_train, targets_test = divide_train_test(states, targets, train_frac)
-            w = train_readout(states_train, targets_train, reg_fact=0)
-            err = test_readout(w, states_test, targets_test)
-            err_list.append(err)
-        err_mean = sum(err_list) / len(err_list)
-        err_std = np.std(err_list)
-        print("mean error = " + str(err_mean) + " std error = " + str(err_std))
+        err_means = []
+        err_stds = []
+        for readout_delay in readout_delays:
+            tau_lsm = 0.020  #[sec]
+            spike_times = get_spike_times(e_spike_rec)  # returns spike times in seconds
+            rec_time_start = (dt_stim / 1000 + stim_len / 1000 + readout_delay)  # time of first liquid state [sec]
+            # times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
+            times = np.arange(rec_time_start, simtime / 1000, dt_stim / 1000)  # times when liquid states are extracted [sec]
+            print("Extract Liquid States...")
+            # don't forget to add constant component to states for bias
+            states = get_liquid_states(spike_times, times, tau_lsm)
+            train_frac = 0.8
+            err_list = []
+            for _ in range(NUM_TRAIN):
+                states_train, states_test, targets_train, targets_test = divide_train_test(states, targets, train_frac)
+                w = train_readout(states_train, targets_train, reg_fact=0)
+                err = test_readout(w, states_test, targets_test)
+                err_list.append(err)
+            err_mean = sum(err_list) / len(err_list)
+            err_std = np.std(err_list)
+            print("mean error = " + str(err_mean) + " std error = " + str(err_std))
+            err_means.append(err_mean)
+            err_stds.append(err_std)
+
+    plt.errorbar(readout_delays, err_means, err_stds)
+    plt.xlabel('Readout delay')
+    plt.ylabel('Error')
+    plt.show()
 
 if __name__ == "__main__":
     main()
