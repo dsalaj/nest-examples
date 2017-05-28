@@ -329,7 +329,8 @@ def main():
                  )
 
     # connect all recorded E/I neurons to the respective detector
-    nest.Connect(e_pool[:500], e_spike_rec)
+    nest.Connect(e_pool[:N_rec], e_spike_rec)
+    # nest.Connect(e_pool, e_spike_rec)  # experiment with better resolution readout
     nest.Connect(i_pool, i_spike_rec)
 
     # SIMULATE!! -----------------------------------------------------
