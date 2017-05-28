@@ -208,7 +208,12 @@ def main():
     readout_delays = [0.01]  # [sec]
     # Results:
     # Excitatory rate: 21.29 Hz Inhibitory rate: 57.08 Hz
-    # mean error = 0.301127819549 std error = 0.0268448430608
+    # (for recording 500 from E-pool and extracting the liquid state):
+    #   mean error = 0.25 std error = 0.0322410889594
+    # (for recording all neurons from E-pool and extracting the liquid state):
+    #   mean error = 0.0199248120301 std error = 0.0109668813126
+
+
 
     # this is for ex 4B
     # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
