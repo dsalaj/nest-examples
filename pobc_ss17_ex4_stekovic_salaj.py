@@ -204,8 +204,8 @@ def main():
     Rs = 200.  #[Hz]
 
     # this is for ex 4A
-    # inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
-    # readout_delays = [0.01]  # [sec]
+    inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
+    readout_delays = [0.01]  # [sec]
     # Results:
     # Excitatory rate: 21.29 Hz Inhibitory rate: 57.08 Hz
     # (for recording 500 from E-pool and extracting the liquid state):
@@ -216,8 +216,8 @@ def main():
 
 
     # this is for ex 4B
-    inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
-    readout_delays = np.arange(0.01, 0.3, 0.03)  # [sec]
+    # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
+    # readout_delays = np.arange(0.01, 0.3, 0.03)  # [sec]
     # Results:
     # Excitatory rate   : 21.58 Hz Inhibitory rate   : 57.20 Hz
     # readout_delay = 0.075  # [sec]
