@@ -179,12 +179,12 @@ def update_weights_wdep(plast_params,spikes_inp, spikes_E, nodes_inp, nodes_E):
 # MAIN
 ###########################################
 
-_TUNE_NETWORK = True  # if True, we just simulate the network once and check its behavior
+_TUNE_NETWORK = False # if True, we just simulate the network once and check its behavior
                       # no learning
                       # used to set parameters of the network to obtain good WTA behavior
 plt.close('all')
 simtime = 100. # [ms] # simulation time for the presentation of a single pattern
-WDEP = True   # define whether to use a linear weight dependency in the updates
+WDEP = False   # define whether to use a linear weight dependency in the updates
 
 ####################
 # Network parameters
@@ -197,10 +197,10 @@ N_pat = 5 # Number of different patterns
 
 # Plasticity parameters for the case of no weight dependency
 plast_params_nowdep = {
-      'w_max':   60,       # Max weight of plastic synapses // on the order or tens                              ?
-      'eta':     0.1,       # learning rate                                                                       ?
-      'A_neg':   1.8,       # LTD factor                                                                          ?
-      'A_pos':   1.2,       # LTP factor                                                                          ?
+      'w_max':   40,       # Max weight of plastic synapses // on the order or tens
+      'eta':     0.1,       # learning rate
+      'A_neg':   5.,       # LTD factor
+      'A_pos':   18.,       # LTP factor
       'A_decay': 0.}       # weight decay factor [Not used]
 
 # Plasticity parameters for the case of weight dependency
@@ -212,7 +212,7 @@ plast_params_wdep = {
 
 if not(WDEP):  # Task 5B, no weight dependence
     plast_params = plast_params_nowdep
-    Nep = 0 # number of pattern presentations during learning                            ?
+    Nep = 1000 # number of pattern presentations during learning
 else:          # Task 5C, weight dependence
     plast_params = plast_params_wdep
     Nep = 0 # number of pattern presentations during learning                            ?
@@ -220,7 +220,7 @@ else:          # Task 5C, weight dependence
 # Connection parameters
 J_in = 4.   # initial strength of Input->E synapses [pA]
 J_EI = 175.  # strength of E->I synapses [pA]
-J_IE = -9.  # strength of inhibitory synapses [pA]
+J_IE = -10.  # strength of inhibitory synapses [pA]
 J_noise = 20.  # strength of synapses from noise input [pA]
 rate_noise = 100. # rate of Poission background noise [Hz]
 
