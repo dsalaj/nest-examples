@@ -19,7 +19,7 @@ def get_rate_patterns(N_in, N_pat, Rmax = 50.0, Rvar = 50.0, PLOT=True):
     # RETURNS:
     # rates.....A list of input rate patterns. rates[i] is a vector of rates [Hz], one for each input neuron.
     #           rates[i][j] is the rate of the j-th input neuron in pattern i.
-    
+
     step = N_in/N_pat-2  # defines the means of the Gaussian rate profiles
     offs = N_in/N_pat/2+2 # defines the offset of the means
     rates=[]
@@ -69,7 +69,7 @@ def test_nework(rates,nodes_inp,simtime,Ntest=10):
   # nodes_inp[i]....GID of input neuron i
   # simtime.........length of a single simulation run (one pattern presentation) in [s].
   # Ntest...........Number of simulations per pattern
-    
+
   N_pat = len(rates)
   nest.ResetNetwork()
   for pattern in range(N_pat):
@@ -97,7 +97,7 @@ def update_weights(plast_params,spikes_inp, spikes_E, nodes_inp, nodes_E):
       A_neg = plast_params['A_neg']
       A_pos = plast_params['A_pos']
       A_decay = plast_params['A_decay']
-      
+
       # Get network events
       events = nest.GetStatus(spikes_inp,'events')[0]
       active_input_neurons = list(events['senders'])
@@ -141,7 +141,7 @@ def update_weights_wdep(plast_params,spikes_inp, spikes_E, nodes_inp, nodes_E):
       eta   = plast_params['eta']
       alpha = plast_params['alpha']
       A_decay = plast_params['A_decay']
-      
+
       # Get network events
       events = nest.GetStatus(spikes_inp,'events')[0]
       active_input_neurons = list(events['senders'])
@@ -179,7 +179,7 @@ def update_weights_wdep(plast_params,spikes_inp, spikes_E, nodes_inp, nodes_E):
 # MAIN
 ###########################################
 
-_TUNE_NETWORK = False  # if True, we just simulate the network once and check its behavior
+_TUNE_NETWORK = True  # if True, we just simulate the network once and check its behavior
                       # no learning
                       # used to set parameters of the network to obtain good WTA behavior
 plt.close('all')
@@ -197,31 +197,31 @@ N_pat = 5 # Number of different patterns
 
 # Plasticity parameters for the case of no weight dependency
 plast_params_nowdep = {
-      'w_max':   ??,       # Max weight of plastic synapses // on the order or tens
-      'eta':     ??,       # learning rate
-      'A_neg':   ??,       # LTD factor
-      'A_pos':   ??,       # LTP factor
+      'w_max':   60,       # Max weight of plastic synapses // on the order or tens                              ?
+      'eta':     0.1,       # learning rate                                                                       ?
+      'A_neg':   1.8,       # LTD factor                                                                          ?
+      'A_pos':   1.2,       # LTP factor                                                                          ?
       'A_decay': 0.}       # weight decay factor [Not used]
 
 # Plasticity parameters for the case of weight dependency
 plast_params_wdep = {
-      'w_max':   ??,       # Max weight of plastic synapses // here, it should be relatively high (why?)
-      'eta':     ??,       # learning rate
+      'w_max':   200,       # Max weight of plastic synapses // here, it should be relatively high (why?)         ?
+      'eta':     0.1,       # learning rate                                                                       ?
       'alpha':  0.5,       # exponent of weight dependency
       'A_decay': 0.}       # weight decay factor
 
 if not(WDEP):  # Task 5B, no weight dependence
     plast_params = plast_params_nowdep
-    Nep = ?? # number of pattern presentations during learning
+    Nep = 0 # number of pattern presentations during learning                            ?
 else:          # Task 5C, weight dependence
     plast_params = plast_params_wdep
-    Nep = ?? # number of pattern presentations during learning
+    Nep = 0 # number of pattern presentations during learning                            ?
 
 # Connection parameters
-J_in = ??   # initial strength of Input->E synapses [pA]
-J_EI = ??  # strength of E->I synapses [pA]
-J_IE = ??  # strength of inhibitory synapses [pA]
-J_noise = ??  # strength of synapses from noise input [pA]
+J_in = 4.   # initial strength of Input->E synapses [pA]
+J_EI = 175.  # strength of E->I synapses [pA]
+J_IE = -9.  # strength of inhibitory synapses [pA]
+J_noise = 20.  # strength of synapses from noise input [pA]
 rate_noise = 100. # rate of Poission background noise [Hz]
 
 # recording parameters
@@ -238,10 +238,10 @@ nest.SetKernelStatus({'print_time': False,
                       'local_num_threads': 11}) # Number of threads used
 
 ####################
-# Create nodes 
+# Create nodes
 ####################
 nest.SetDefaults('iaf_psc_exp',
-                 {'C_m': 30.0,  
+                 {'C_m': 30.0,
                   'tau_m': 30.0,
                   'I_e': 0.0,
                   'E_L': -70.0,
@@ -283,7 +283,7 @@ nest.SetStatus(nodes_inp,{"rate":0.,"start":60.,"stop":80.})
 
 
 ####################
-# Connect nodes 
+# Connect nodes
 ####################
 
 # connect inputs to neurons
@@ -328,7 +328,7 @@ nest.Connect(noise_I, nodes_E,
 nest.Connect(nodes_inp, spikes_inp)
 nest.Connect(nodes_E, spikes_E)
 nest.Connect(nodes_I, spikes_I)
-nest.Connect(voltmeter,nodes_E)    
+nest.Connect(voltmeter,nodes_E)
 
 ##############################
 # Test before learning
@@ -358,7 +358,7 @@ if not(_TUNE_NETWORK):
 ##############################
     # initialize weight recording buffers
     Wrec = [] # Wrec[i] will hold the evolution of weights for the i-th excitatory neuron
-    in_conns = [] # in_conns[i] will hold the connection ID-s of incoming synapses for the i-th excitatory neuron  
+    in_conns = [] # in_conns[i] will hold the connection ID-s of incoming synapses for the i-th excitatory neuron
     for i in range(N_E):
       Wrec.append(np.zeros((Nrec,N_in)))
       in_conns.append(nest.GetConnections(nodes_inp, [nodes_E[i]]))
@@ -384,7 +384,7 @@ if not(_TUNE_NETWORK):
             print("WTA spikes: ", nevents[1])
          rec_idx += 1
     # LEARNING IS DONE NOW
-    
+
     # plot weight evolution
     plt.figure()
     for i in range(N_E):
