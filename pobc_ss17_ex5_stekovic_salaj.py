@@ -184,7 +184,7 @@ _TUNE_NETWORK = False # if True, we just simulate the network once and check its
                       # used to set parameters of the network to obtain good WTA behavior
 plt.close('all')
 simtime = 100. # [ms] # simulation time for the presentation of a single pattern
-WDEP = False   # define whether to use a linear weight dependency in the updates
+WDEP = True    # define whether to use a linear weight dependency in the updates
 
 ####################
 # Network parameters
@@ -197,17 +197,17 @@ N_pat = 5 # Number of different patterns
 
 # Plasticity parameters for the case of no weight dependency
 plast_params_nowdep = {
-      'w_max':   40,       # Max weight of plastic synapses // on the order or tens
+      'w_max':   50,       # Max weight of plastic synapses // on the order or tens
       'eta':     0.1,       # learning rate
       'A_neg':   5.,       # LTD factor
-      'A_pos':   18.,       # LTP factor
+      'A_pos':   15.,       # LTP factor
       'A_decay': 0.}       # weight decay factor [Not used]
 
 # Plasticity parameters for the case of weight dependency
 plast_params_wdep = {
-      'w_max':   200,       # Max weight of plastic synapses // here, it should be relatively high (why?)         ?
-      'eta':     0.1,       # learning rate                                                                       ?
-      'alpha':  0.5,       # exponent of weight dependency
+      'w_max':   200,       # Max weight of plastic synapses // here, it should be relatively high (why?)
+      'eta':     0.9,       # learning rate
+      'alpha':   0.5,       # exponent of weight dependency
       'A_decay': 0.}       # weight decay factor
 
 if not(WDEP):  # Task 5B, no weight dependence
@@ -215,12 +215,12 @@ if not(WDEP):  # Task 5B, no weight dependence
     Nep = 1000 # number of pattern presentations during learning
 else:          # Task 5C, weight dependence
     plast_params = plast_params_wdep
-    Nep = 0 # number of pattern presentations during learning                            ?
+    Nep = 2000 # number of pattern presentations during learning                            ?
 
 # Connection parameters
 J_in = 4.   # initial strength of Input->E synapses [pA]
 J_EI = 175.  # strength of E->I synapses [pA]
-J_IE = -10.  # strength of inhibitory synapses [pA]
+J_IE = -9.  # strength of inhibitory synapses [pA]
 J_noise = 20.  # strength of synapses from noise input [pA]
 rate_noise = 100. # rate of Poission background noise [Hz]
 
