@@ -205,7 +205,7 @@ plast_params_nowdep = {
 
 # Plasticity parameters for the case of weight dependency
 plast_params_wdep = {
-      'w_max':   200,       # Max weight of plastic synapses // here, it should be relatively high (why?)
+      'w_max':   100,       # Max weight of plastic synapses // here, it should be relatively high (why?)
       'eta':     0.9,       # learning rate
       'alpha':   0.5,       # exponent of weight dependency
       'A_decay': 0.}       # weight decay factor
