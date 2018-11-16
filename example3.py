@@ -1,6 +1,6 @@
 import nest
 from pylab import *       # for plotting (matplotlib)
-from pobc_utils import *  # for generating poisson spike trains
+from utils import *  # for generating poisson spike trains
 from numpy import *       # for numerical operations
 import nest.raster_plot
 import nest.voltage_trace

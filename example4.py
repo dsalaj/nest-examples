@@ -2,7 +2,7 @@ import nest
 import nest.raster_plot
 import pylab
 import numpy as np
-from pobc_utils import get_spike_times, poisson_generator
+from utils import get_spike_times, poisson_generator
 import matplotlib.pyplot as plt
 
 
