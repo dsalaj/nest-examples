@@ -1,18 +1,11 @@
 # *******************************************************************
-#   PoBC, SS17
 #
-#   Template script for Exercise 2
-#
-#   The model consists of two populations, an input population of input 
+#   The model consists of two populations, an input population of input
 #   neurons and a population of IAF neurons. The populations are
 #   are connected with fixed indegree via dynamic synapses. The input neurons
 #   produce Poisson spike trains with rate Ri, starting from Tstart.
-#    
-#
-#       Robert Legenstein, March 2017
 #
 # *******************************************************************
-# At the beginning we import the necessary Python packages
 # from pypcsimplus import * # the pcsim package with extras
 from random import uniform
 import nest
@@ -61,7 +54,7 @@ def construct_input_population(Nin, Rin, Tstart):
     # Because in Nest, one cannot connect Poisson generators with other
     # neurons via dynamic synapses, we need to first connect them to a
     # pool of iaf_psc_exp neurons which are then serving as the input pool
-    # The pool will produce approximately Poissonian spike trains with rate Rin 
+    # The pool will produce approximately Poissonian spike trains with rate Rin
     # Nin...number of input neurons
     # Rin...firing rate of each input neuron in [Hz]
     # Tstart...time when input neurons start to fire [sec]
@@ -214,15 +207,6 @@ def perform_simulation_d(Nnrn, Nin, U, D, F, Tsim, Rin):
     return spikes_ts, spike_rec
 
 
-# *******************************************************
-# Main script code should be here.
-# Several simulations with the model have to be performed
-# with different Ri,U,D,F and the population rate should be
-# plotted. Use avg_firing_rate to calculate the population rate.
-# *******************************************************
-
-# Solution b)
-'''
 # F = 0.376
 nest.ResetKernel()
 spikes, spike_rec = perform_simulation(Nnrn=1000, Nin=500, Rin=20., U=0.16, D=0.045, F=0.376, Tsim=2.)
@@ -237,8 +221,8 @@ f1_rate_2 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=2., Nneuron
 print("F1 rate (F = 0.1)", f1_rate_2)
 nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
-show()  # don't forget to call show() in the end
-# such that figures are displayed on the screen
+show()
+
 
 plt.plot(range(len(f1_rate_1)), f1_rate_1, label="F = 0.376")
 plt.plot(range(len(f1_rate_2)), f1_rate_2, label="F = 0.1")
@@ -247,26 +231,24 @@ plt.xlabel("Time")
 plt.ylabel("Population Frequency")
 plt.legend()
 plt.show()
-'''
 
-# Solution d)
+
 
 # F2 uniform
 nest.ResetKernel()
 spikes, spike_rec = perform_simulation_d(Nnrn=1000, Nin=500, Rin='uniform', U=0.25, D=0.706, F=0.021, Tsim=4)
 f2_rate_1 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=4., Nneurons=1000)
-# print("F2 uniform rate", f2_rate_1)
+print("F2 uniform rate", f2_rate_1)
 nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
 # F2 0 or 40
 nest.ResetKernel()
 spikes, spike_rec = perform_simulation_d(Nnrn=1000, Nin=500, Rin='0_or_40', U=0.25, D=0.706, F=0.021, Tsim=4)
 f2_rate_2 = avg_firing_rate(spikes/1000., dt=0.005, binsize=10, Tsim=4., Nneurons=1000)
-# print("F2 uniform rate", f2_rate_2)
+print("F2 uniform rate", f2_rate_2)
 nest.raster_plot.from_device(spike_rec, hist_binwidth=10.)
 
-show()  # don't forget to call show() in the end
-# such that figures are displayed on the screen
+show()
 
 plt.plot(range(len(f2_rate_1)), f2_rate_1, label="Rin := uniform")
 plt.plot(range(len(f2_rate_2)), f2_rate_2, label="Rin := 0 or 40")

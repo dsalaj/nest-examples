@@ -1,4 +1,3 @@
-## PoBC 2017, ex5
 ## Competitive learning in WTA networks
 
 import matplotlib.pyplot as plt
@@ -9,7 +8,7 @@ import nest.voltage_trace
 import pylab
 import numpy as np
 
-#from pobc_utils import get_spike_times, poisson_generator
+# from pobc_utils import get_spike_times, poisson_generator
 
 def get_rate_patterns(N_in, N_pat, Rmax = 50.0, Rvar = 50.0, PLOT=True):
     # generate N_pat rate patterns for the N_in input neurons

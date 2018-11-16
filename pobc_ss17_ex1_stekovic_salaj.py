@@ -1,19 +1,12 @@
 #*******************************************************************
-#   PoBC, SS17
-#
-#   Template script for Task 1B 
 #
 #   A leaky integrate-and-fire neuron is created.
-#   It gets a spike input at time t=55 ms 
+#   It gets a spike input at time t=55 ms
 #   There is also an optional step current input at time t=50 ms that forces the neuron to spike
-#   There is also an optional step current input at time t=50 ms that forces the neuron to spike
-#
-#
 #
 #*******************************************************************
-# At the beginning we import the necessary Python packages
-from numpy import *       # for numerical operations
-import pylab       # for plotting (matplotlib)
+from numpy import *
+import pylab
 import nest
 import nest.voltage_trace
 import nest.raster_plot
@@ -80,7 +73,6 @@ spike_rec = nest.Create('spike_detector')
 # Connect nodes
 ###################################
 
-#nest.Connect(sine,neuron)
 # Connect spike generator to neuron
 # Note: The connection weight is given in [pA]
 spike_gen_syn_spec = {'delay': 2., 'weight': 5000.}
@@ -97,7 +89,7 @@ nest.Connect(voltmeter, neuron2)
 nest.Connect(neuron2, spike_rec)
 
 ###################################
-# Now simulate 
+# Now simulate
 ###################################
 nest.Simulate(500.0)
 

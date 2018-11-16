@@ -1,5 +1,3 @@
-## PoBC 2017, ex4
-
 import nest
 import nest.raster_plot
 import pylab
@@ -174,7 +172,6 @@ def main():
                           'local_num_threads': 1})  # increase if you can use more threads
 
     # Create nodes -------------------------------------------------
-
     nest.SetDefaults('iaf_psc_exp',
                      {'C_m': 30.0,  # 1.0,
                       'tau_m': 30.0,
@@ -203,7 +200,6 @@ def main():
     stim_len = 50.  #[ms]
     Rs = 200.  #[Hz]
 
-    # this is for ex 4A
     inp_spikes, targets = generate_stimuls_xor(dt_stim, stim_len, Rs, simtime)
     readout_delays = [0.01]  # [sec]
     # Results:
@@ -215,7 +211,6 @@ def main():
 
 
 
-    # this is for ex 4B
     # inp_spikes, targets = generate_stimuls_mem(dt_stim, stim_len, Rs, simtime)
     # readout_delays = np.arange(0.01, 0.3, 0.03)  # [sec]
     # Results:
@@ -228,8 +223,6 @@ def main():
     spike_generators = nest.Create("spike_generator", 2)
     for (sg, sp) in zip(spike_generators, inp_spikes):
         nest.SetStatus([sg], {'spike_times': sp})
-
-    # Connect nodes ------------------------------------------------
 
     # dynamic parameters
     f0 = 10.
@@ -333,7 +326,7 @@ def main():
     # nest.Connect(e_pool, e_spike_rec)  # experiment with better resolution readout
     nest.Connect(i_pool, i_spike_rec)
 
-    # SIMULATE!! -----------------------------------------------------
+    # SIMULATE -----------------------------------------------------
     nest.Simulate(simtime)
     t = int(simtime / 1000.)
     # # shorter simulation time for checking rates
@@ -341,7 +334,7 @@ def main():
     # nest.Simulate(1000. * t)
 
     # # don't forget to record all neurons for rate calculation
-    # #compute excitatory rate
+    # # compute excitatory rate
     # spikes_e = get_spike_times(e_spike_rec)
     # total_spikes_e = np.concatenate(spikes_e)
     # rate_ex = total_spikes_e.shape[0] / (t * N_E)

@@ -1,5 +1,4 @@
 #from numpy import array, log
-import numpy
 import numpy as np
 from pylab import find
 import nest
@@ -80,7 +79,7 @@ def poisson_generator(rate, t_start=0.0, t_stop=1000.0, rng=None):
     Returns a SpikeTrain whose spikes are a realization of a Poisson process
     with the given rate (Hz) and stopping time t_stop (milliseconds).
 
-    Note: t_start is always 0.0, thus all realizations are as if 
+    Note: t_start is always 0.0, thus all realizations are as if
     they spiked at t=0.0, though this spike is not included in the SpikeList.
 
     Inputs:
@@ -93,7 +92,7 @@ def poisson_generator(rate, t_start=0.0, t_stop=1000.0, rng=None):
     Examples:
         >> gen.poisson_generator(50, 0, 1000)
         >> gen.poisson_generator(20, 5000, 10000, array=True)
-     
+
     See also:
         inh_poisson_generator
     """
@@ -105,22 +104,22 @@ def poisson_generator(rate, t_start=0.0, t_stop=1000.0, rng=None):
 
     # less wasteful than double length method above
     n = (t_stop - t_start) / 1000.0 * rate
-    number = numpy.ceil(n + 3 * numpy.sqrt(n))
+    number = np.ceil(n + 3 * np.sqrt(n))
     if number < 100:
-        number = min(5 + numpy.ceil(2 * n), 100)
+        number = min(5 + np.ceil(2 * n), 100)
 
     number = int(number)
     if number > 0:
         isi = rng.exponential(1.0 / rate, number) * 1000.0
         if number > 1:
-            spikes = numpy.add.accumulate(isi)
+            spikes = np.add.accumulate(isi)
         else:
             spikes = isi
     else:
-        spikes = numpy.array([])
+        spikes = np.array([])
 
     spikes += t_start
-    i = numpy.searchsorted(spikes, t_stop)
+    i = np.searchsorted(spikes, t_stop)
 
     extra_spikes = []
     if i == len(spikes):
@@ -132,9 +131,9 @@ def poisson_generator(rate, t_start=0.0, t_stop=1000.0, rng=None):
             extra_spikes.append(t_last)
             t_last += rng.exponential(1.0 / rate, 1)[0] * 1000.0
 
-        spikes = numpy.concatenate((spikes, extra_spikes))
+        spikes = np.concatenate((spikes, extra_spikes))
 
     else:
-        spikes = numpy.resize(spikes, (i,))
+        spikes = np.resize(spikes, (i,))
 
     return spikes
